@@ -15,25 +15,25 @@ def getInfo(url):
     for i in url:
         source = requests.get(i).text
         soup = BeautifulSoup(source, 'html.parser')
-        try:
+        if soup.find_all(id = 'articleTitle'):
             title = soup.find_all(id = 'articleTitle')
             for item in title:
                 title_list.append(item.find('h3').text)
-        except:
+        else:
             title_list.append('Title not found.')
 
-        try:
+        if soup.find_all(id = 'authorString'):
             author = soup.find_all(id = 'authorString')
             for item in author:
                 author_list.append(item.find('em').text)
-        except:
+        else:
             author_list.append('Author not found.')
 
-        try:
+        if soup.find_all(id = 'articleAbstract'):
             background = soup.find_all(id = 'articleAbstract')
             for item in background:
                 abstract_list.append(item.find('div').text)
-        except:
+        else:
             abstract_list.append('Abstract not found.')
 
         if soup.find_all(id = 'articleSubject'):
@@ -53,11 +53,6 @@ def getInfo(url):
         print(f'Artigos raspados: {n} de {l}.')
     
     print('Arquivo em xlsx sendo gerado.')
-    print('Title_list: ', len(title_list))
-    print('Author_list: ', len(author_list))
-    print('abstract_list: ', len(abstract_list))
-    print('tag_list: ', len(tag_list))
-    print('complete_version_list: ', len(complete_version_list))
 
     df = pd.DataFrame({
         'Titles': title_list,
@@ -94,29 +89,37 @@ def getMagazines(url):
     page.goto(url)
     page.is_visible('div.tile-body')
     condition = page.url
-    next_page = page.locator("text=>").nth(1).get_attribute('href')
-    last_page = page.locator("text=/.*\\>\\>.*/").get_attribute('href')
+    try:
+        next_page = page.locator("text=>").nth(1).get_attribute('href')
+        last_page = page.locator("text=/.*\\>\\>.*/").get_attribute('href')
+    except:
+        next_page_exists = False
     magazines = []
     while condition != None:
         url = page.inner_html('#issues')
         soup = BeautifulSoup(url, 'html.parser')
-        if last_page == page.url:
-            previous_page = page.locator("text=<").nth(1).get_attribute('href')
-            for all_links in soup.find_all('a'):
-                if all_links.attrs['href'] != previous_page:
-                    magazines.append(all_links.attrs['href'])
-            condition = None
+        if next_page_exists != False:
+            if last_page == page.url:
+                previous_page = page.locator("text=<").nth(1).get_attribute('href')
+                for all_links in soup.find_all('a'):
+                    if all_links.attrs['href'] != previous_page:
+                        magazines.append(all_links.attrs['href'])
+                condition = None
+            else:
+                next_page = page.locator("text=>").nth(1).get_attribute('href')
+                for all_links in soup.find_all('a'):
+                    if all_links.attrs['href'] != next_page:
+                        magazines.append(all_links.attrs['href'])
+                page.locator("text=>").nth(1).click()
         else:
-            next_page = page.locator("text=>").nth(1).get_attribute('href')
             for all_links in soup.find_all('a'):
-                if all_links.attrs['href'] != next_page:
-                    magazines.append(all_links.attrs['href'])
-            page.locator("text=>").nth(1).click()
+                magazines.append(all_links.attrs['href'])
+                condition = None
     page.close()
     print('Todos os links das revistas foram raspados.')
     getArticles(magazines)
 
 with sync_playwright() as p:
-    getMagazines('http://www.periodicos.ulbra.br/index.php/acta/issue/archive')
+    getMagazines('http://www.periodicos.ulbra.br/index.php/ic/issue/archive')
 
 
