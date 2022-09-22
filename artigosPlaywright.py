@@ -9,6 +9,19 @@ abstract_list = []
 tag_list = []
 complete_version_list = []
 
+def geraExcel():
+    print('Arquivo em xlsx sendo gerado.')
+    df = pd.DataFrame({
+        'Titles': title_list,
+        'Authors': author_list,
+        'Abstract': abstract_list,
+        'Tags': tag_list,
+        'Complete Version': complete_version_list
+    })
+
+    df.to_excel('artigos.xlsx', index=False)
+    print('Arquivo gerado.')
+
 def getInfo(url):
     l = len(url)
     n = 0
@@ -51,19 +64,7 @@ def getInfo(url):
             complete_version_list.append('Pdf not found.')
         n+=1
         print(f'Artigos raspados: {n} de {l}.')
-    
-    print('Arquivo em xlsx sendo gerado.')
-
-    df = pd.DataFrame({
-        'Titles': title_list,
-        'Authors': author_list,
-        'Abstract': abstract_list,
-        'Tags': tag_list,
-        'Complete Version': complete_version_list
-    })
-
-    df.to_excel('artigos.xlsx', index=False)
-    print('Arquivo gerado.')
+    geraExcel()
 
 def getArticles(magazines):
     size = len(magazines)
