@@ -8,6 +8,7 @@ author_list = []
 abstract_list = []
 tag_list = []
 complete_version_list = []
+article_link = []
 
 def geraExcel():
     print('Arquivo em xlsx sendo gerado.')
@@ -23,7 +24,6 @@ def geraExcel():
     print('Arquivo gerado.')
 
 def getInfo(url):
-    l = len(url)
     n = 0
     for i in url:
         source = requests.get(i).text
@@ -63,14 +63,13 @@ def getInfo(url):
         else:
             complete_version_list.append('Pdf not found.')
         n+=1
-        print(f'Artigos raspados: {n} de {l}.')
+        print(f'Artigos raspados: {n} de {len(url)}.')
     geraExcel()
 
-def getArticles(magazines):
-    size = len(magazines)
+def getArticlesWithCovers(cover_magazines):
+    size = len(cover_magazines)
     sites_scraped = 0
-    article_link = []
-    for i in magazines:
+    for i in cover_magazines:
         source = requests.get(i).text
         soup = BeautifulSoup(source, 'html.parser')
         try:
@@ -80,7 +79,33 @@ def getArticles(magazines):
         except:
             None
         sites_scraped+=1
-        print(f'Revistas raspadas: {sites_scraped} de {size}')
+    print(f'Revistas com cover raspadas: {sites_scraped} de {size}.\n',
+    'Todas revistas com cover foram raspadas!\nVoltando a executar módulo de raspagem das revistas...')
+
+def getArticles(magazines):
+    size = len(magazines)
+    sites_scraped = 0
+    
+    cover_magazines = []
+    for i in magazines:
+        source = requests.get(i).text
+        soup = BeautifulSoup(source, 'html.parser')
+        try:
+            title = soup.find_all('div', {'class': 'tocTitle'})
+            for link in title:
+                article_link.append(link.find('a').attrs['href'])
+        except:
+            None
+        if soup.find(id = 'issueCoverImage'):
+            for link in soup.find(id = 'issueCoverImage'):
+                cover_magazines.append(link.attrs['href'])
+        sites_scraped+=1
+    print('Tamanho da cover_magazines', len(cover_magazines))
+    if len(cover_magazines) != 0 :
+        print('Começando a raspar as revistas nas quais apresentam foto.')
+        getArticlesWithCovers(cover_magazines)
+    
+    print(f'Revistas raspadas: {sites_scraped} de {size}')
     print('Todas revistas foram raspadas!\nIniciando módulo para raspar os dados dos artigos...') 
     getInfo(article_link)
 
@@ -122,5 +147,3 @@ def getMagazines(url):
 
 with sync_playwright() as p:
     getMagazines('http://www.periodicos.ulbra.br/index.php/ic/issue/archive')
-
-
