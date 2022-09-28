@@ -131,6 +131,7 @@ def getMagazines(url):
     try:
         next_page = page.locator("text=>").nth(1).get_attribute('href')
         last_page = page.locator("text=/.*\\>\\>.*/").get_attribute('href')
+        next_page_exists = True
     except:
         next_page_exists = False
     magazines = []
@@ -159,4 +160,12 @@ def getMagazines(url):
     getArticles(magazines)
 
 with sync_playwright() as p:
-    getMagazines('http://www.periodicos.ulbra.br/index.php/ic/issue/archive')
+    getMagazines('http://www.periodicos.ulbra.br/index.php/acta/issue/archive')
+
+'''
+SITES QUE FORAM REALIZADOS OS TESTES:
+
+- http://www.periodicos.ulbra.br/index.php/acta/issue/archive
+
+- http://www.periodicos.ulbra.br/index.php/ic/issue/archive
+'''
