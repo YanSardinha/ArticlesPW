@@ -8,19 +8,40 @@ author_list = []
 abstract_list = []
 tag_list = []
 complete_version_list = []
-article_link = []
 
-def geraExcel():
-    print('Arquivo em xlsx sendo gerado.')
+def genFile():
+    def genExcel():
+        print('Arquivo em xlsx sendo gerado.')
+        df.to_excel('article.xlsx', index=False)
+
+    def genCsv():
+        df.to_csv('article.csv', index=False)
+
+    def genJson():
+        df.to_json('article.json', index=False)
+
     df = pd.DataFrame({
-        'Titles': title_list,
-        'Authors': author_list,
-        'Abstract': abstract_list,
-        'Tags': tag_list,
-        'Complete Version': complete_version_list
-    })
+            'Titles': title_list,
+            'Authors': author_list,
+            'Abstract': abstract_list,
+            'Tags': tag_list,
+            'Complete Version': complete_version_list
+        })
 
-    df.to_excel('artigos.xlsx', index=False)
+    file_type = int(input('Select an option\n'
+    '1 - Excel (article.xlsx)\n'
+    '2 - CSV (article.csv)\n'
+    '3 - JSON (article.json\n'))
+
+    if file_type == 1:
+        genExcel()
+    elif file_type == 2:
+        genCsv()
+    elif file_type == 3:
+        genJson()
+    else:
+        print('Invalid option, please try again and select a valid option.')
+        genFile()
     print('Arquivo gerado.')
 
 def getInfo(url):
@@ -64,28 +85,22 @@ def getInfo(url):
             complete_version_list.append('Pdf not found.')
         n+=1
         print(f'Artigos raspados: {n} de {len(url)}.')
-    geraExcel()
-
-def getArticlesWithCovers(cover_magazines):
-    size = len(cover_magazines)
-    sites_scraped = 0
-    for i in cover_magazines:
-        source = requests.get(i).text
-        soup = BeautifulSoup(source, 'html.parser')
-        try:
-            title = soup.find_all('div', {'class': 'tocTitle'})
-            for link in title:
-                article_link.append(link.find('a').attrs['href'])
-        except:
-            None
-        sites_scraped+=1
-    print(f'Revistas com cover raspadas: {sites_scraped} de {size}.\n',
-    'Todas revistas com cover foram raspadas!\nVoltando a executar módulo de raspagem das revistas...')
+    genFile()
 
 def getArticles(magazines):
-    size = len(magazines)
-    sites_scraped = 0
+    def getArticlesWithCovers(cover_magazines):
+        for i in cover_magazines:
+            source = requests.get(i).text
+            soup = BeautifulSoup(source, 'html.parser')
+            try:
+                title = soup.find_all('div', {'class': 'tocTitle'})
+                for link in title:
+                    article_link.append(link.find('a').attrs['href'])
+            except:
+                None
     
+    article_link = []
+    sites_scraped = 0
     cover_magazines = []
     for i in magazines:
         source = requests.get(i).text
@@ -100,12 +115,10 @@ def getArticles(magazines):
             for link in soup.find(id = 'issueCoverImage'):
                 cover_magazines.append(link.attrs['href'])
         sites_scraped+=1
-    print('Tamanho da cover_magazines', len(cover_magazines))
     if len(cover_magazines) != 0 :
-        print('Começando a raspar as revistas nas quais apresentam foto.')
         getArticlesWithCovers(cover_magazines)
     
-    print(f'Revistas raspadas: {sites_scraped} de {size}')
+    print(f'Revistas raspadas: {sites_scraped} de {len(magazines)}')
     print('Todas revistas foram raspadas!\nIniciando módulo para raspar os dados dos artigos...') 
     getInfo(article_link)
 
