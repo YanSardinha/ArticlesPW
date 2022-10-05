@@ -1,3 +1,4 @@
+from operator import index
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -9,16 +10,23 @@ abstract_list = []
 tag_list = []
 complete_version_list = []
 
+def genCharts():
+    '''
+    dict = df.to_dict()
+
+    '''
+    pass
+
 def genFile():
     def genExcel():
         print('Arquivo em xlsx sendo gerado.')
         df.to_excel('article.xlsx', index=False)
 
     def genCsv():
-        df.to_csv('article.csv', index=False)
+        df.to_csv('article.csv', sep=';')
 
     def genJson():
-        df.to_json('article.json', index=False)
+        df.to_json('article.json')
 
     df = pd.DataFrame({
             'Titles': title_list,
@@ -123,17 +131,19 @@ def getArticles(magazines):
     getInfo(article_link)
 
 def getMagazines(url):
-    browser = p.firefox.launch(headless=False)
+    browser = p.firefox.launch(headless=True)
     page = browser.new_page()
     page.goto(url)
     page.is_visible('div.tile-body')
     condition = page.url
     try:
+        print('Verificando se a página contém sucessores.')
         next_page = page.locator("text=>").nth(1).get_attribute('href')
         last_page = page.locator("text=/.*\\>\\>.*/").get_attribute('href')
         next_page_exists = True
     except:
         next_page_exists = False
+        print('Página não contém sucessores.')
     magazines = []
     while condition != None:
         url = page.inner_html('#issues')
