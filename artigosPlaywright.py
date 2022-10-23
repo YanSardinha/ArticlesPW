@@ -3,12 +3,14 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
+import re
 
 title_list = []
 author_list = []
 abstract_list = []
 tag_list = []
 complete_version_list = []
+date_list = []
 
 def genCharts():
     '''
@@ -33,7 +35,8 @@ def genFile():
             'Authors': author_list,
             'Abstract': abstract_list,
             'Tags': tag_list,
-            'Complete Version': complete_version_list
+            'Complete Version': complete_version_list,
+            'Date': date_list
         })
 
     file_type = int(input('Select an option\n'
@@ -62,35 +65,44 @@ def getInfo(url):
             for item in title:
                 title_list.append(item.find('h3').text)
         else:
-            title_list.append('Title not found.')
+            title_list.append('Title not found')
 
         if soup.find_all(id = 'authorString'):
             author = soup.find_all(id = 'authorString')
             for item in author:
                 author_list.append(item.find('em').text)
         else:
-            author_list.append('Author not found.')
+            author_list.append('Author not found')
 
         if soup.find_all(id = 'articleAbstract'):
             background = soup.find_all(id = 'articleAbstract')
             for item in background:
                 abstract_list.append(item.find('div').text)
         else:
-            abstract_list.append('Abstract not found.')
+            abstract_list.append('Abstract not found')
 
         if soup.find_all(id = 'articleSubject'):
             tags = soup.find_all(id = 'articleSubject')
             for item in tags:
                 tag_list.append(item.find('div').text)
         else:
-            tag_list.append('Tags not found.')
+            tag_list.append('Tags not found')
 
         if soup.find_all(id = 'articleFullText'):
             pdf = soup.find_all(id = 'articleFullText')
             for item in pdf:
                 complete_version_list.append(item.find('a').attrs['href'])
         else:
-            complete_version_list.append('Pdf not found.')
+            complete_version_list.append('Pdf not found')
+
+        if soup.find_all(id = "breadcrumb"):
+            date = soup.find_all(id = "breadcrumb")
+            for item in date:
+                w = item.find(string=re.compile("v"))
+                x = w.find("(") + 1
+                y = w.find(")")
+                date_list.append(w[x:y])
+
         n+=1
         print(f'Artigos raspados: {n} de {len(url)}.')
     genFile()
@@ -105,8 +117,8 @@ def getArticles(magazines):
                 for link in title:
                     article_link.append(link.find('a').attrs['href'])
             except:
-                None
-    
+                print('Oops, something is wrong. Please, contact someone who might know.')
+
     article_link = []
     sites_scraped = 0
     cover_magazines = []
@@ -118,15 +130,23 @@ def getArticles(magazines):
             for link in title:
                 article_link.append(link.find('a').attrs['href'])
         except:
-            None
+            if soup.find_all('td', {'class': 'tocArticleTitleAuthors'}):
+                title = soup.find_all('div', {'class': 'tocTitle'})
+                for link in title:
+                    try:
+                        article_link.append(link.find('a').attrs['href'])
+                    except:
+                        None
+                    #print('Oops, something is wrong. Please, contact someone who might know.')
         if soup.find(id = 'issueCoverImage'):
             for link in soup.find(id = 'issueCoverImage'):
                 cover_magazines.append(link.attrs['href'])
+        
         sites_scraped+=1
-    if len(cover_magazines) != 0 :
-        getArticlesWithCovers(cover_magazines)
+        print(f'Revistas raspadas: {sites_scraped} de {len(magazines)}')
+
+    getArticlesWithCovers(cover_magazines)
     
-    print(f'Revistas raspadas: {sites_scraped} de {len(magazines)}')
     print('Todas revistas foram raspadas!\nIniciando módulo para raspar os dados dos artigos...') 
     getInfo(article_link)
 
@@ -134,7 +154,7 @@ def getMagazines(url):
     browser = p.firefox.launch(headless=True)
     page = browser.new_page()
     page.goto(url)
-    page.is_visible('div.tile-body')
+    page.is_visible('div.issues')
     condition = page.url
     try:
         print('Verificando se a página contém sucessores.')
