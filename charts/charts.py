@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -60,17 +60,12 @@ date_dict = (Counter(date_data))
 
 
 #Quantidade de Artigos por Ano
-
-#fig, ax = plt.subplots()
-#line1, = ax.plot(date_dict.values(), label='Keys', linestyle='--')
-
 plt.plot(date_dict.keys(), date_dict.values(), 'o--')
 plt.xlabel('Anos')
 plt.ylabel('Artigos')
 plt.title('Quantidade de Artigos por Ano')
 plt.grid(True)
 plt.show()
-
 
 #for i in df_dict['Date']:
     #print(df_dict['Authors'][i])
@@ -85,3 +80,14 @@ for key in df_dict['Date']:
     inverted_df_dict[value] = key
 
 #print(df_dict['Date'])
+
+#Autores por ano
+authorsDate = defaultdict(list)
+
+for i in df['Date'], df['Authors']:
+    for key, value in i.items():
+        if value in df['Date'].tolist():
+            authorsDate[value].append([df['Authors'][key]])
+print(authorsDate)
+        
+
